@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#07110f" />
+    <meta name="description" content="Şehrini kur, ordunu büyüt ve Bölge 47 haritasını ele geçir." />
+    <title>Bölge 47 — Çevrim İçi Strateji</title>
+    <link rel="stylesheet" href="/app.css" />
+  </head>
+  <body>
+    <div id="auth" class="auth-shell">
+      <section class="auth-copy">
+        <div class="logo"><span>47</span> BÖLGE</div>
+        <div class="auth-kicker">ÇEVRİM İÇİ STRATEJİ</div>
+        <h1>Şehrini kur.<br /><em>Sınırları değiştir.</em></h1>
+        <p>Kısa çatışmalarda bölge kazan, uzun sezonda imparatorluğunu büyüt. Haritadaki her altıgen gerçek bir oyuncunun kaderini değiştirir.</p>
+        <div class="auth-features">
+          <span><b>19</b> bölge</span><span><b>Canlı</b> sıralama</span><span><b>Kalıcı</b> şehir</span>
+        </div>
+        <div class="auth-map" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+      </section>
+      <section class="auth-card">
+        <div class="auth-tabs">
+          <button data-auth-tab="login" class="active">Giriş yap</button>
+          <button data-auth-tab="register">Kayıt ol</button>
+        </div>
+        <form id="login-form">
+          <h2>Komuta merkezine dön</h2>
+          <p>Şehrin ve ordun seni bekliyor.</p>
+          <label>E-posta<input required type="email" name="email" autocomplete="email" placeholder="ornek@mail.com" /></label>
+          <label>Şifre<input required minlength="8" type="password" name="password" autocomplete="current-password" placeholder="En az 8 karakter" /></label>
+          <button class="primary" type="submit">Giriş yap <span>→</span></button>
+        </form>
+        <form id="register-form" hidden>
+          <h2>Yeni bir şehir kur</h2>
+          <p>Sezon haritasında yerini hemen al.</p>
+          <label>Şehir adı<input required minlength="3" maxlength="24" name="cityName" autocomplete="organization" placeholder="Örn. Nova İstanbul" /></label>
+          <label>E-posta<input required type="email" name="email" autocomplete="email" placeholder="ornek@mail.com" /></label>
+          <label>Şifre<input required minlength="8" type="password" name="password" autocomplete="new-password" placeholder="En az 8 karakter" /></label>
+          <button class="primary" type="submit">Şehrimi kur <span>→</span></button>
+        </form>
+        <div id="auth-message" class="form-message" role="status"></div>
+        <small class="auth-note">Kayıt olarak oyun kurallarını kabul etmiş olursun.</small>
+      </section>
+    </div>
+
+    <div id="game" class="game" hidden>
+      <header class="topbar">
+        <button class="game-logo" data-nav="city"><span>47</span><b>BÖLGE</b></button>
+        <nav>
+          <button data-nav="city" class="active">Şehir</button>
+          <button data-nav="map">Harita</button>
+          <button data-nav="army">Ordu</button>
+          <button data-nav="league">Lig</button>
+        </nav>
+        <div class="resources">
+          <span title="Kredi"><i>₵</i><b id="credits">0</b></span>
+          <span title="Çelik"><i>◆</i><b id="steel">0</b></span>
+          <span title="Enerji"><i>ϟ</i><b id="energy">0</b></span>
+        </div>
+        <button id="profile-button" class="profile"><span id="profile-level">1</span><b id="profile-name">Şehir</b></button>
+      </header>
+
+      <main>
+        <section id="view-city" class="view active">
+          <div class="city-hero panel">
+            <div class="city-intro">
+              <span class="eyebrow">KOMUTA MERKEZİ</span>
+              <h1 id="city-name">Şehir</h1>
+              <p>Üretimi büyüt, ordunu hazırla ve sezon haritasına hükmet.</p>
+              <div class="city-stats">
+                <span><b id="population">0</b>Nüfus</span>
+                <span><b id="defense">0</b>Savunma</span>
+                <span><b id="territory">0</b>Bölge</span>
+                <span><b id="rating">0</b>Puan</span>
+              </div>
+            </div>
+            <div class="skyline" aria-hidden="true">
+              <div class="city-grid"></div>
+              <i class="b b1"></i><i class="b b2"></i><i class="b b3"></i><i class="b b4"></i><i class="b b5"></i>
+              <span class="scan"></span>
+            </div>
+          </div>
+
+          <div class="city-layout">
+            <section>
+              <div class="section-title"><div><span class="eyebrow">ALTYAPI</span><h2>Şehir bölgeleri</h2></div><span>Yükselt ve üretimi artır</span></div>
+              <div id="building-grid" class="building-grid"></div>
+            </section>
+            <aside class="operations panel">
+              <span class="eyebrow">GÜNLÜK OPERASYON</span>
+              <h2>Kaynak konvoyu</h2>
+              <p>Şehrin her dakika yeni kaynak üretir. Konvoy hazır olduğunda teslim al.</p>
+              <div class="income"><span><i>₵</i><b id="income-credit">0</b></span><span><i>◆</i><b id="income-steel">0</b></span><span><i>ϟ</i><b id="income-energy">0</b></span></div>
+              <button id="collect-button" class="primary">Konvoyu teslim al</button>
+              <small id="collect-timer">Hazır</small>
+              <div class="operation-rule"></div>
+              <h3>Son çatışmalar</h3>
+              <div id="battle-mini" class="battle-mini"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="view-map" class="view">
+          <div class="map-header">
+            <div><span class="eyebrow">SEZON 01 · 19 BÖLGE</span><h1>Savaş Haritası</h1><p>Bir bölge seç, gücünü belirle ve kısa çatışmada sınırlarını genişlet.</p></div>
+            <div class="map-legend"><span class="mine">Senin</span><span class="enemy">Rakip</span><span class="neutral">Tarafsız</span></div>
+          </div>
+          <div class="war-room">
+            <div id="region-map" class="region-map"></div>
+            <aside id="region-panel" class="region-panel panel">
+              <span class="eyebrow">BÖLGE DOSYASI</span>
+              <h2>Haritadan bölge seç</h2>
+              <p>Bir altıgene dokunarak savunma ve kaynak bilgisini gör.</p>
+            </aside>
+          </div>
+        </section>
+
+        <section id="view-army" class="view">
+          <div class="army-hero panel">
+            <div><span class="eyebrow">KARA KUVVETLERİ</span><h1><span id="army-count">0</span> aktif birlik</h1><p>Ordunu büyüt; daha kalabalık birlikler bölge çatışmalarında avantaj sağlar.</p></div>
+            <div class="radar" aria-hidden="true"><i></i><i></i><i></i></div>
+          </div>
+          <div class="army-grid">
+            <article class="panel unit-card"><span>HIZLI EĞİTİM</span><h2>10 birlik</h2><p>180 kredi · 60 çelik</p><button data-recruit="10">Birlikleri eğit</button></article>
+            <article class="panel unit-card"><span>ALAY EĞİTİMİ</span><h2>25 birlik</h2><p>450 kredi · 150 çelik</p><button data-recruit="25">Alayı hazırla</button></article>
+            <article class="panel unit-card accent"><span>ŞEHİR SAVUNMASI</span><h2 id="army-defense">0 güç</h2><p>380 kredi · 90 çelik</p><button id="fortify-button">Savunmayı güçlendir</button></article>
+          </div>
+          <section class="battle-log panel"><div class="section-title"><div><span class="eyebrow">ÇATIŞMA KAYITLARI</span><h2>Son operasyonlar</h2></div></div><div id="battle-log"></div></section>
+        </section>
+
+        <section id="view-league" class="view">
+          <div class="league-hero">
+            <span class="eyebrow">REKABETÇİ SEZON</span><h1>Bölge hâkimiyeti</h1><p>Puan, ele geçirilen bölge ve galibiyet sayısına göre tüm oyunculara karşı yarış.</p>
+          </div>
+          <div class="league-layout">
+            <section class="leader-table panel"><div class="leader-head"><span>#</span><span>Şehir</span><span>Seviye</span><span>Bölge</span><span>Galibiyet</span><span>Puan</span></div><div id="leaderboard"></div></section>
+            <aside class="season-card panel"><span class="eyebrow">SEZON BİTİŞİ</span><b>12 gün 08 saat</b><p>İlk üç şehir özel profil arması ve başlangıç kaynağı kazanır.</p><div class="podium"><span>2</span><span>1</span><span>3</span></div></aside>
+          </div>
+        </section>
+      </main>
+
+      <div id="toast" class="toast" role="status"></div>
+      <div id="profile-menu" class="profile-menu panel" hidden>
+        <span id="profile-email"></span>
+        <button id="logout-button">Çıkış yap</button>
+      </div>
+    </div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
