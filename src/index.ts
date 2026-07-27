@@ -33,20 +33,20 @@ const REGION_RESOURCES = ["credit", "steel", "energy"] as const;
 
 async function ensureSchema(db: D1Database) {
   await db.batch([
-    db.prepare(\`CREATE TABLE IF NOT EXISTS users (
+    db.prepare(`CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT NOT NULL UNIQUE COLLATE NOCASE,
       password_hash TEXT NOT NULL,
       password_salt TEXT NOT NULL,
       created_at INTEGER NOT NULL
-    )\`),
-    db.prepare(\`CREATE TABLE IF NOT EXISTS sessions (
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS sessions (
       token_hash TEXT PRIMARY KEY,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       expires_at INTEGER NOT NULL,
       created_at INTEGER NOT NULL
-    )\`),
-    db.prepare(\`CREATE TABLE IF NOT EXISTS cities (
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS cities (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
@@ -63,23 +63,23 @@ async function ensureSchema(db: D1Database) {
       losses INTEGER NOT NULL DEFAULT 0,
       last_collect_at INTEGER NOT NULL DEFAULT 0,
       updated_at INTEGER NOT NULL
-    )\`),
-    db.prepare(\`CREATE TABLE IF NOT EXISTS buildings (
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS buildings (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       type TEXT NOT NULL,
       level INTEGER NOT NULL DEFAULT 1,
       UNIQUE(user_id, type)
-    )\`),
-    db.prepare(\`CREATE TABLE IF NOT EXISTS regions (
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS regions (
       id INTEGER PRIMARY KEY,
       name TEXT NOT NULL,
       owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
       defense INTEGER NOT NULL,
       resource_type TEXT NOT NULL,
       updated_at INTEGER NOT NULL
-    )\`),
-    db.prepare(\`CREATE TABLE IF NOT EXISTS battles (
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS battles (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       attacker_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       defender_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -88,7 +88,7 @@ async function ensureSchema(db: D1Database) {
       attack_power INTEGER NOT NULL,
       defense_power INTEGER NOT NULL,
       created_at INTEGER NOT NULL
-    )\`),
+    )`),
     db.prepare("CREATE INDEX IF NOT EXISTS sessions_user_idx ON sessions(user_id)"),
     db.prepare("CREATE INDEX IF NOT EXISTS sessions_expiry_idx ON sessions(expires_at)"),
     db.prepare("CREATE INDEX IF NOT EXISTS regions_owner_idx ON regions(owner_id)"),
