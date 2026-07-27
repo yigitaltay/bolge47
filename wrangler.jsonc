@@ -12,7 +12,6 @@
     {
       "binding": "DB",
       "database_name": "bolge47-db",
-      "database_id": "CHANGE_ME_AFTER_D1_CREATE",
       "migrations_dir": "migrations"
     }
   ]
