@@ -30,6 +30,72 @@ const REGION_NAMES = [
 ];
 const REGION_RESOURCES = ["credit", "steel", "energy"] as const;
 
+
+async function ensureSchema(db: D1Database) {
+  await db.batch([
+    db.prepare(\`CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL UNIQUE COLLATE NOCASE,
+      password_hash TEXT NOT NULL,
+      password_salt TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    )\`),
+    db.prepare(\`CREATE TABLE IF NOT EXISTS sessions (
+      token_hash TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      expires_at INTEGER NOT NULL,
+      created_at INTEGER NOT NULL
+    )\`),
+    db.prepare(\`CREATE TABLE IF NOT EXISTS cities (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      credits INTEGER NOT NULL DEFAULT 2500,
+      energy INTEGER NOT NULL DEFAULT 100,
+      steel INTEGER NOT NULL DEFAULT 600,
+      level INTEGER NOT NULL DEFAULT 1,
+      population INTEGER NOT NULL DEFAULT 120,
+      army INTEGER NOT NULL DEFAULT 45,
+      defense INTEGER NOT NULL DEFAULT 30,
+      territory INTEGER NOT NULL DEFAULT 1,
+      rating INTEGER NOT NULL DEFAULT 1000,
+      wins INTEGER NOT NULL DEFAULT 0,
+      losses INTEGER NOT NULL DEFAULT 0,
+      last_collect_at INTEGER NOT NULL DEFAULT 0,
+      updated_at INTEGER NOT NULL
+    )\`),
+    db.prepare(\`CREATE TABLE IF NOT EXISTS buildings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      type TEXT NOT NULL,
+      level INTEGER NOT NULL DEFAULT 1,
+      UNIQUE(user_id, type)
+    )\`),
+    db.prepare(\`CREATE TABLE IF NOT EXISTS regions (
+      id INTEGER PRIMARY KEY,
+      name TEXT NOT NULL,
+      owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      defense INTEGER NOT NULL,
+      resource_type TEXT NOT NULL,
+      updated_at INTEGER NOT NULL
+    )\`),
+    db.prepare(\`CREATE TABLE IF NOT EXISTS battles (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      attacker_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      defender_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      region_id INTEGER NOT NULL REFERENCES regions(id),
+      result TEXT NOT NULL,
+      attack_power INTEGER NOT NULL,
+      defense_power INTEGER NOT NULL,
+      created_at INTEGER NOT NULL
+    )\`),
+    db.prepare("CREATE INDEX IF NOT EXISTS sessions_user_idx ON sessions(user_id)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS sessions_expiry_idx ON sessions(expires_at)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS regions_owner_idx ON regions(owner_id)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS battles_attacker_idx ON battles(attacker_id, created_at DESC)")
+  ]);
+}
+
 const json = (data: unknown, status = 200, headers: HeadersInit = {}) =>
   new Response(JSON.stringify(data), {
     status,
@@ -352,6 +418,7 @@ export default {
     if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(request);
 
     try {
+      await ensureSchema(env.DB);
       if (request.method === "POST" && url.pathname === "/api/register") return register(request, env);
       if (request.method === "POST" && url.pathname === "/api/login") return login(request, env);
       if (request.method === "POST" && url.pathname === "/api/logout") return logout(request, env);
