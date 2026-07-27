@@ -30,7 +30,6 @@ const REGION_NAMES = [
 ];
 const REGION_RESOURCES = ["credit", "steel", "energy"] as const;
 
-
 async function ensureSchema(db: D1Database) {
   await db.batch([
     db.prepare(`CREATE TABLE IF NOT EXISTS users (
@@ -244,16 +243,27 @@ async function register(request: Request, env: Env) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Geçerli bir e-posta yaz." }, 400);
   if (password.length < 8 || password.length > 128) return json({ error: "Şifre en az 8 karakter olmalı." }, 400);
   if (cityName.length < 3) return json({ error: "Şehir adı en az 3 karakter olmalı." }, 400);
-  const existing = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
-  if (existing) return json({ error: "Bu e-posta zaten kayıtlı." }, 409);
+  const existing = await env.DB.prepare(`
+    SELECT u.id, c.id AS city_id
+    FROM users u
+    LEFT JOIN cities c ON c.user_id = u.id
+    WHERE u.email = ?
+  `).bind(email).first<{ id: number; city_id: number | null }>();
+  if (existing?.city_id) return json({ error: "Bu e-posta zaten kayıtlı." }, 409);
+  if (existing) {
+    await env.DB.prepare("DELETE FROM users WHERE id = ?").bind(existing.id).run();
+  }
 
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const now = Date.now();
   try {
-    const userResult = await env.DB.prepare(`
+    await env.DB.prepare(`
       INSERT INTO users (email, password_hash, password_salt, created_at) VALUES (?, ?, ?, ?)
     `).bind(email, await passwordHash(password, salt), bytesToBase64(salt), now).run();
-    const userId = Number(userResult.meta.last_row_id);
+    const createdUser = await env.DB.prepare("SELECT id FROM users WHERE email = ?")
+      .bind(email).first<{ id: number }>();
+    if (!createdUser) throw new Error("Yeni kullanıcı kaydı doğrulanamadı.");
+    const userId = createdUser.id;
     await env.DB.batch([
       env.DB.prepare(`
         INSERT INTO cities (user_id, name, updated_at) VALUES (?, ?, ?)
@@ -287,6 +297,14 @@ async function register(request: Request, env: Env) {
     );
   } catch (error) {
     console.error(error);
+    const orphan = await env.DB.prepare(`
+      SELECT u.id FROM users u
+      LEFT JOIN cities c ON c.user_id = u.id
+      WHERE u.email = ? AND c.id IS NULL
+    `).bind(email).first<{ id: number }>();
+    if (orphan) {
+      await env.DB.prepare("DELETE FROM users WHERE id = ?").bind(orphan.id).run();
+    }
     return json({ error: "Kayıt oluşturulamadı." }, 500);
   }
 }
