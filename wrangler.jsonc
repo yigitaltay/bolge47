@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bolge47",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-28",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "bolge47-db",
+      "database_id": "CHANGE_ME_AFTER_D1_CREATE",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
