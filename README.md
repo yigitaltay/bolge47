@@ -28,25 +28,21 @@ Wrangler yerel adresi açıldığında kayıt olarak oynayabilirsin.
    npx wrangler login
    ```
 
-2. D1 veritabanını oluştur:
+2. Worker'ı ilk kez yayınla. Wrangler `bolge47-db` D1 veritabanını otomatik oluşturur:
 
    ```bash
-   npx wrangler d1 create bolge47-db
+   npm run deploy
    ```
 
-3. Komutun döndürdüğü `database_id` değerini `wrangler.jsonc` içindeki `CHANGE_ME_AFTER_D1_CREATE` alanına yaz.
-
-4. Uzak veritabanı şemasını uygula:
+3. Uzak veritabanı şemasını uygula:
 
    ```bash
    npm run db:remote
    ```
 
-5. Worker'ı yayınla:
-
-   ```bash
-   npm run deploy
-   ```
+Cloudflare Git bağlantısında ilk yayın için deploy komutu olarak
+`npx wrangler deploy && npx wrangler d1 migrations apply bolge47-db --remote`
+kullanılabilir.
 
 ## Oyun döngüsü
 
