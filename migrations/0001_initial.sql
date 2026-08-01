@@ -1,6 +1,6 @@
 PRAGMA foreign_keys = ON;
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT NOT NULL UNIQUE COLLATE NOCASE,
   password_hash TEXT NOT NULL,
@@ -8,60 +8,50 @@ CREATE TABLE users (
   created_at INTEGER NOT NULL
 );
 
-CREATE TABLE sessions (
+CREATE TABLE IF NOT EXISTS sessions (
   token_hash TEXT PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   expires_at INTEGER NOT NULL,
   created_at INTEGER NOT NULL
 );
-CREATE INDEX sessions_user_idx ON sessions(user_id);
-CREATE INDEX sessions_expiry_idx ON sessions(expires_at);
 
-CREATE TABLE cities (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  credits INTEGER NOT NULL DEFAULT 2500,
-  energy INTEGER NOT NULL DEFAULT 100,
-  steel INTEGER NOT NULL DEFAULT 600,
-  level INTEGER NOT NULL DEFAULT 1,
-  population INTEGER NOT NULL DEFAULT 120,
-  army INTEGER NOT NULL DEFAULT 45,
-  defense INTEGER NOT NULL DEFAULT 30,
-  territory INTEGER NOT NULL DEFAULT 1,
-  rating INTEGER NOT NULL DEFAULT 1000,
-  wins INTEGER NOT NULL DEFAULT 0,
-  losses INTEGER NOT NULL DEFAULT 0,
-  last_collect_at INTEGER NOT NULL DEFAULT 0,
-  updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE buildings (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  type TEXT NOT NULL,
-  level INTEGER NOT NULL DEFAULT 1,
-  UNIQUE(user_id, type)
-);
-
-CREATE TABLE regions (
-  id INTEGER PRIMARY KEY,
-  name TEXT NOT NULL,
-  owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-  defense INTEGER NOT NULL,
-  resource_type TEXT NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE INDEX regions_owner_idx ON regions(owner_id);
-
-CREATE TABLE battles (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  attacker_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  defender_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-  region_id INTEGER NOT NULL REFERENCES regions(id),
-  result TEXT NOT NULL,
-  attack_power INTEGER NOT NULL,
-  defense_power INTEGER NOT NULL,
+CREATE TABLE IF NOT EXISTS rhythm_profiles (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  avatar_color TEXT NOT NULL DEFAULT '#9cff3b',
+  total_score INTEGER NOT NULL DEFAULT 0,
+  plays INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL
 );
-CREATE INDEX battles_attacker_idx ON battles(attacker_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS rhythm_runs (
+  id TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  track_id TEXT NOT NULL,
+  difficulty TEXT NOT NULL,
+  started_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL,
+  submitted_at INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS rhythm_scores (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  track_id TEXT NOT NULL,
+  difficulty TEXT NOT NULL,
+  score INTEGER NOT NULL,
+  accuracy REAL NOT NULL,
+  max_combo INTEGER NOT NULL,
+  perfect INTEGER NOT NULL,
+  great INTEGER NOT NULL,
+  good INTEGER NOT NULL,
+  miss INTEGER NOT NULL,
+  grade TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS sessions_user_idx ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS sessions_expiry_idx ON sessions(expires_at);
+CREATE INDEX IF NOT EXISTS rhythm_scores_board_idx ON rhythm_scores(track_id, difficulty, score DESC);
+CREATE INDEX IF NOT EXISTS rhythm_scores_user_idx ON rhythm_scores(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS rhythm_runs_expiry_idx ON rhythm_runs(expires_at);
