@@ -14,3 +14,15 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-2;bac
 @media(max-width:900px){.site-header{padding:0 20px}.site-header nav{display:none}.hero{grid-template-columns:1fr;min-height:auto;padding:85px 28px 45px}.hero-visual{min-height:400px}.track-grid{grid-template-columns:1fr}.track-art{height:220px}.play-track{top:192px}.board-section{grid-template-columns:1fr;gap:45px}.section{padding:75px 20px}.game-topbar{grid-template-columns:45px 1fr auto 45px;gap:10px;padding:0 10px}.game-accuracy{display:none}}
 @media(max-width:560px){.site-header{height:72px}.brand{font-size:15px}.account-btn{padding:9px 12px}.hero{padding-top:60px}h1{font-size:60px}.hero-lead{font-size:14px}.hero-actions{flex-direction:column}.hero-actions button{width:100%}.hero-meta{justify-content:space-between;gap:10px}.hero-visual{min-height:330px}.orbit-one{width:300px;height:300px}.orbit-two{width:360px;height:360px}.pulse-core{width:145px;height:145px}.pulse-core:after{inset:-65px}.section-heading{align-items:flex-start;flex-direction:column;gap:24px}.difficulty-switch{width:100%;overflow:auto}.difficulty-switch button{flex:1;padding:10px 8px}.track-art{height:190px}.play-track{top:162px}.board-labels,.board-row{grid-template-columns:1fr 82px 90px;padding-left:14px;padding-right:14px}.board-section{padding-bottom:90px}.game-topbar{height:66px}.playing-track>span{display:none}.game-score strong{font-size:17px}.touch-controls{height:78px}.modal{padding:28px 20px}.result-main strong{font-size:13px}.judgements{grid-template-columns:1fr 1fr;gap:12px}.result-grade{font-size:86px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important}}
+
+/* Serbest alan fare hedefleme modu */
+.game-stage{touch-action:none}
+#gameCanvas{cursor:none}
+.touch-controls{display:none!important}
+.aim-hint{height:52px;display:flex;align-items:center;justify-content:center;gap:9px;background:#080b09;border-top:1px solid #202622;color:#758079;font-size:9px;letter-spacing:.12em}
+.aim-hint b{color:white}.aim-hint i{width:1px;height:18px;background:#2a322e;margin:0 13px}.mouse-icon{color:var(--game-accent,var(--lime));font-size:18px}
+.aim-demo{height:112px;margin-top:22px;border:1px solid #29312e;border-radius:14px;position:relative;background:radial-gradient(circle at 68% 35%,rgba(156,255,59,.1),transparent 30%),#090c0b;overflow:hidden}
+.aim-demo i{position:absolute;border:2px solid var(--lime);border-radius:50%;width:28px;height:28px;box-shadow:0 0 16px rgba(156,255,59,.25)}
+.aim-demo i:first-child{left:17%;top:53%}.aim-demo i:nth-child(2){left:47%;top:18%;width:20px;height:20px;border-color:var(--cyan)}.aim-demo i:nth-child(3){right:16%;bottom:18%;width:34px;height:34px;border-color:var(--pink)}
+.aim-demo span{position:absolute;left:45%;top:52%;color:white;font-size:24px;transform:rotate(-20deg)}
+@media(max-width:560px){.aim-hint{height:44px;font-size:8px}.aim-hint span:last-child{display:none}}

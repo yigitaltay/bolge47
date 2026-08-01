@@ -4,13 +4,12 @@ const TRACKS = {
   overdrive: { title: "OVERDRIVE", artist: "Zero//Signal", bpm: 174, duration: 60, color: "#ff4da6", index: "03", seed: 909 },
 };
 const DIFFICULTY = {
-  easy: { label: "KOLAY", division: 1, density: .86, travel: 2.05, chord: 0 },
-  normal: { label: "NORMAL", division: 2, density: .62, travel: 1.8, chord: .03 },
-  hard: { label: "ZOR", division: 2, density: .84, travel: 1.55, chord: .1 },
-  expert: { label: "UZMAN", division: 4, density: .66, travel: 1.35, chord: .16 },
+  easy: { label: "KOLAY", division: 1, density: .86, approach: 1.2, radius: 46 },
+  normal: { label: "NORMAL", division: 2, density: .62, approach: 1.0, radius: 40 },
+  hard: { label: "ZOR", division: 2, density: .84, approach: .82, radius: 35 },
+  expert: { label: "UZMAN", division: 4, density: .66, approach: .68, radius: 31 },
 };
-const LANE_COLORS = ["#9cff3b", "#56e7ff", "#bd72ff", "#ff4da6"];
-const KEY_LANES = { KeyD: 0, KeyF: 1, KeyJ: 2, KeyK: 3 };
+const TARGET_COLORS = ["#9cff3b", "#56e7ff", "#bd72ff", "#ff4da6", "#ffbe3d"];
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -69,26 +68,36 @@ function generateChart(trackId, difficultyId) {
   const beat = 60 / track.bpm;
   const step = beat / config.division;
   const notes = [];
-  let lastLane = -1;
+  let last = { x: .5, y: .5 };
   let tick = 0;
   for (let time = 3.2; time < track.duration - 1.8; time += step) {
     const onBeat = tick % config.division === 0;
     let shouldAdd = random() < config.density;
     if (difficultyId === "easy") shouldAdd = onBeat && random() < .91;
     if (!shouldAdd) { tick++; continue; }
-    let lane = Math.floor(random() * 4);
-    if (lane === lastLane && random() < .72) lane = (lane + 1 + Math.floor(random() * 3)) % 4;
-    if (trackId === "glass-horizon" && tick % 8 < 4) lane = tick % 4;
-    if (trackId === "overdrive" && tick % 12 >= 8) lane = 3 - (tick % 4);
-    notes.push({ time, lane, judged: false, result: null });
-    lastLane = lane;
-    if (onBeat && random() < config.chord) {
-      const second = (lane + 2 + Math.floor(random() * 2)) % 4;
-      if (second !== lane) notes.push({ time, lane: second, judged: false, result: null });
+    let x, y;
+    if (trackId === "neon-pulse") {
+      const angle = tick * 1.37 + random() * .55;
+      const radius = .24 + random() * .22;
+      x = .5 + Math.cos(angle) * radius;
+      y = .5 + Math.sin(angle) * radius;
+    } else if (trackId === "glass-horizon") {
+      x = .12 + ((tick * .23 + random() * .16) % .76);
+      y = .5 + Math.sin(tick * 1.18) * (.22 + random() * .16);
+    } else {
+      x = .09 + random() * .82;
+      y = .1 + random() * .8;
     }
+    let attempts = 0;
+    while (Math.hypot(x - last.x, y - last.y) < .2 && attempts++ < 6) {
+      x = .09 + random() * .82; y = .1 + random() * .8;
+    }
+    const radius = config.radius + (onBeat ? 4 : 0) + Math.round(random() * 5);
+    notes.push({ time, x, y, radius, color: TARGET_COLORS[(tick + track.seed) % TARGET_COLORS.length], judged: false, result: null });
+    last = { x, y };
     tick++;
   }
-  return notes.sort((a, b) => a.time - b.time || a.lane - b.lane);
+  return notes.sort((a, b) => a.time - b.time);
 }
 
 function resizeCanvas() {
@@ -175,7 +184,7 @@ async function startGame(trackId = selectedTrack, difficultyId = selectedDifficu
     trackId, difficultyId, track, notes, startTime, runId, state: "playing", frame: 0,
     combo: 0, maxCombo: 0, points: 0, score: 0, accuracy: 100,
     counts: { perfect: 0, great: 0, good: 0, miss: 0 },
-    laneFlash: [0, 0, 0, 0], hits: [], master: null,
+    pointer: { x: 0, y: 0, visible: false }, hits: [], master: null,
   };
   document.documentElement.style.setProperty("--game-accent", track.color);
   $("#gameTrackIndex").textContent = track.index;
@@ -185,7 +194,7 @@ async function startGame(trackId = selectedTrack, difficultyId = selectedDifficu
   $("#accuracyValue").textContent = "100.00%";
   $("#gameMessage").classList.remove("fade");
   $("#gameMessage strong").textContent = "HAZIR?";
-  $("#gameMessage span").textContent = "D · F · J · K";
+  $("#gameMessage span").textContent = "FAREYİ HEDEFLERE TAŞI";
   homeView.classList.add("hidden"); gameView.classList.remove("hidden");
   document.body.style.overflow = "hidden";
   resizeCanvas();
@@ -207,11 +216,22 @@ function updateStats() {
   $("#accuracyValue").textContent = `${game.accuracy.toFixed(2)}%`;
 }
 
-function judgeLane(lane) {
-  if (!game || game.state !== "playing" || gameTime() < 0) return;
+function targetPoint(note, width = canvas.clientWidth, height = canvas.clientHeight) {
+  const margin = Math.min(85, width * .08, height * .09);
+  return { x: margin + note.x * (width - margin * 2), y: margin + note.y * (height - margin * 2) };
+}
+
+function aimAt(clientX, clientY) {
+  if (!game) return;
+  const rect = canvas.getBoundingClientRect();
+  game.pointer.x = clientX - rect.left; game.pointer.y = clientY - rect.top; game.pointer.visible = true;
+  if (game.state !== "playing" || gameTime() < 0) return;
   const time = gameTime();
-  game.laneFlash[lane] = performance.now() + 110;
-  const candidate = game.notes.find((note) => !note.judged && note.lane === lane && Math.abs(note.time - time) <= .18);
+  const candidate = game.notes.find((note) => {
+    if (note.judged || Math.abs(note.time - time) > .18) return false;
+    const point = targetPoint(note);
+    return Math.hypot(point.x - game.pointer.x, point.y - game.pointer.y) <= note.radius;
+  });
   if (!candidate) return;
   const delta = Math.abs(candidate.time - time);
   const result = delta <= .045 ? "perfect" : delta <= .09 ? "great" : "good";
@@ -219,7 +239,8 @@ function judgeLane(lane) {
   game.counts[result]++;
   game.combo++; game.maxCombo = Math.max(game.maxCombo, game.combo);
   game.points += result === "perfect" ? 1 : result === "great" ? .75 : .45;
-  game.hits.push({ lane, at: performance.now(), label: result.toUpperCase(), color: result === "perfect" ? LANE_COLORS[lane] : result === "great" ? "#56e7ff" : "#ffbe3d" });
+  const point = targetPoint(candidate);
+  game.hits.push({ x: point.x, y: point.y, at: performance.now(), label: result.toUpperCase(), color: result === "perfect" ? candidate.color : result === "great" ? "#56e7ff" : "#ffbe3d" });
   updateStats();
 }
 
@@ -227,14 +248,11 @@ function processMisses(time) {
   for (const note of game.notes) {
     if (!note.judged && time - note.time > .18) {
       note.judged = true; note.result = "miss"; game.counts.miss++; game.combo = 0;
-      game.hits.push({ lane: note.lane, at: performance.now(), label: "MISS", color: "#ff4d69" });
+      const point = targetPoint(note);
+      game.hits.push({ x: point.x, y: point.y, at: performance.now(), label: "MISS", color: "#ff4d69" });
       updateStats();
     }
   }
-}
-
-function roundedRect(context, x, y, width, height, radius) {
-  context.beginPath(); context.roundRect(x, y, width, height, radius); context.fill();
 }
 
 function renderGame() {
@@ -242,51 +260,57 @@ function renderGame() {
   const width = canvas.clientWidth, height = canvas.clientHeight;
   const now = performance.now(), time = gameTime();
   ctx.clearRect(0, 0, width, height);
-  const laneWidth = Math.min(152, width / 4);
-  const fieldWidth = laneWidth * 4;
-  const fieldX = (width - fieldWidth) / 2;
-  const hitY = height * .82;
-  const travel = DIFFICULTY[game.difficultyId].travel;
-  const speed = (hitY + 85) / travel;
-  const gradient = ctx.createLinearGradient(0, 0, 0, height);
-  gradient.addColorStop(0, "rgba(255,255,255,.008)"); gradient.addColorStop(1, "rgba(255,255,255,.035)");
-  ctx.fillStyle = gradient; ctx.fillRect(fieldX, 0, fieldWidth, height);
-  for (let lane = 0; lane < 4; lane++) {
-    const x = fieldX + lane * laneWidth;
-    ctx.fillStyle = now < game.laneFlash[lane] ? `${LANE_COLORS[lane]}18` : "rgba(255,255,255,.008)";
-    ctx.fillRect(x, 0, laneWidth, height);
-    ctx.strokeStyle = "rgba(255,255,255,.065)"; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+  const background = ctx.createRadialGradient(width * .5, height * .45, 20, width * .5, height * .45, Math.max(width, height) * .7);
+  background.addColorStop(0, `${game.track.color}0d`); background.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = background; ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = "rgba(255,255,255,.025)"; ctx.lineWidth = 1;
+  for (let x = 24; x < width; x += 48) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke(); }
+  for (let y = 24; y < height; y += 48) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke(); }
+
+  const approach = DIFFICULTY[game.difficultyId].approach;
+  const upcoming = game.notes.filter((note) => !note.judged && note.time - time <= approach && note.time - time >= -.2).slice(0, 5);
+  if (upcoming.length > 1) {
+    ctx.beginPath();
+    upcoming.forEach((note, index) => { const point = targetPoint(note, width, height); index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y); });
+    ctx.strokeStyle = `${game.track.color}32`; ctx.lineWidth = 2; ctx.setLineDash([5, 11]); ctx.stroke(); ctx.setLineDash([]);
   }
-  ctx.beginPath(); ctx.moveTo(fieldX, hitY); ctx.lineTo(fieldX + fieldWidth, hitY);
-  ctx.strokeStyle = game.track.color; ctx.lineWidth = 2; ctx.shadowBlur = 16; ctx.shadowColor = game.track.color; ctx.stroke(); ctx.shadowBlur = 0;
-  for (const note of game.notes) {
-    if (note.judged) continue;
-    const y = hitY - (note.time - time) * speed;
-    if (y < -50 || y > height + 50) continue;
-    const x = fieldX + note.lane * laneWidth + 9;
-    const noteW = laneWidth - 18, noteH = Math.max(13, laneWidth * .105);
-    ctx.fillStyle = LANE_COLORS[note.lane]; ctx.shadowColor = LANE_COLORS[note.lane]; ctx.shadowBlur = 17;
-    roundedRect(ctx, x, y - noteH / 2, noteW, noteH, 6); ctx.shadowBlur = 0;
-    ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.fillRect(x + 9, y - noteH / 2 + 3, noteW - 18, 2);
-  }
+  upcoming.forEach((note, index) => {
+    const point = targetPoint(note, width, height);
+    const remaining = Math.max(0, note.time - time);
+    const progress = Math.min(1, remaining / approach);
+    const approachRadius = note.radius + progress * 78;
+    const urgency = 1 - progress;
+    ctx.globalAlpha = .2 + urgency * .8;
+    ctx.strokeStyle = note.color; ctx.lineWidth = index === 0 ? 4 : 2;
+    ctx.shadowColor = note.color; ctx.shadowBlur = index === 0 ? 24 : 8;
+    ctx.beginPath(); ctx.arc(point.x, point.y, approachRadius, 0, Math.PI * 2); ctx.stroke();
+    ctx.shadowBlur = 0; ctx.fillStyle = `${note.color}18`; ctx.beginPath(); ctx.arc(point.x, point.y, note.radius, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = note.color; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(point.x, point.y, note.radius, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = note.color; ctx.beginPath(); ctx.arc(point.x, point.y, 7 + urgency * 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#071008"; ctx.font = "900 10px Inter, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(index + 1), point.x, point.y);
+  });
   const activeHits = game.hits.filter((hit) => now - hit.at < 650);
   game.hits = activeHits;
   for (const hit of activeHits) {
     const age = (now - hit.at) / 650;
-    const centerX = fieldX + hit.lane * laneWidth + laneWidth / 2;
     ctx.globalAlpha = 1 - age; ctx.fillStyle = hit.color; ctx.font = `900 ${14 + age * 5}px Inter, sans-serif`; ctx.textAlign = "center";
-    ctx.fillText(hit.label, centerX, hitY - 28 - age * 34);
+    ctx.fillText(hit.label, hit.x, hit.y - 38 - age * 34);
   }
   ctx.globalAlpha = 1;
   if (game.combo >= 2) {
     ctx.textAlign = "center"; ctx.fillStyle = "white"; ctx.font = "900 38px Inter, sans-serif"; ctx.fillText(`${game.combo}×`, width / 2, height * .28);
     ctx.fillStyle = game.track.color; ctx.font = "800 8px Inter, sans-serif"; ctx.fillText("KOMBO", width / 2, height * .28 + 18);
   }
+  if (game.pointer.visible) {
+    ctx.strokeStyle = "white"; ctx.lineWidth = 1.5; ctx.shadowColor = game.track.color; ctx.shadowBlur = 14;
+    ctx.beginPath(); ctx.arc(game.pointer.x, game.pointer.y, 10, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(game.pointer.x - 16, game.pointer.y); ctx.lineTo(game.pointer.x + 16, game.pointer.y); ctx.moveTo(game.pointer.x, game.pointer.y - 16); ctx.lineTo(game.pointer.x, game.pointer.y + 16); ctx.stroke(); ctx.shadowBlur = 0;
+  }
   if (time < 0) {
     const count = Math.ceil(-time);
     $("#gameMessage strong").textContent = count > 0 ? count : "BAŞLA";
   } else if (!$("#gameMessage").classList.contains("fade")) {
-    $("#gameMessage strong").textContent = "BAŞLA"; $("#gameMessage span").textContent = "RİTMİ YAKALA"; $("#gameMessage").classList.add("fade");
+    $("#gameMessage strong").textContent = "BAŞLA"; $("#gameMessage span").textContent = "HEDEFLERİ YAKALA"; $("#gameMessage").classList.add("fade");
   }
   if (game.state === "playing" && time >= 0) processMisses(time);
   if (time >= game.track.duration) { finishGame(); return; }
@@ -424,15 +448,11 @@ $("#authForm").addEventListener("submit", async (event) => {
 });
 
 window.addEventListener("keydown", (event) => {
-  if (event.code in KEY_LANES) { event.preventDefault(); judgeLane(KEY_LANES[event.code]); const button = $(`[data-lane="${KEY_LANES[event.code]}"]`); button?.classList.add("active"); }
   if (event.code === "Escape" && !gameView.classList.contains("hidden") && !$("#resultModal").open) { event.preventDefault(); togglePause(); }
 });
-window.addEventListener("keyup", (event) => { if (event.code in KEY_LANES) $(`[data-lane="${KEY_LANES[event.code]}"]`)?.classList.remove("active"); });
-$$('[data-lane]').forEach((button) => {
-  const press = (event) => { event.preventDefault(); button.classList.add("active"); judgeLane(Number(button.dataset.lane)); };
-  const release = () => button.classList.remove("active");
-  button.addEventListener("pointerdown", press); button.addEventListener("pointerup", release); button.addEventListener("pointercancel", release); button.addEventListener("pointerleave", release);
-});
+canvas.addEventListener("pointermove", (event) => { event.preventDefault(); aimAt(event.clientX, event.clientY); });
+canvas.addEventListener("pointerdown", (event) => { event.preventDefault(); canvas.setPointerCapture?.(event.pointerId); aimAt(event.clientX, event.clientY); });
+canvas.addEventListener("pointerleave", () => { if (game) game.pointer.visible = false; });
 window.addEventListener("resize", () => { if (!gameView.classList.contains("hidden")) resizeCanvas(); });
 document.addEventListener("visibilitychange", () => { if (document.hidden && game?.state === "playing") togglePause(); });
 

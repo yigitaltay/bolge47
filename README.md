@@ -1,12 +1,12 @@
 # Rythia
 
-Rythia, tarayıcıda çalışan çevrim içi bir ritim oyunudur. Dört şeritli oynanış, canlı üretilen özgün elektronik müzikler, farklı zorluklar, klavye ve dokunmatik kontroller, hesap sistemi ve global skor tabloları içerir.
+Rythia, tarayıcıda çalışan çevrim içi bir fare hedefleme ritim oyunudur. Hedefler müziğe göre serbest oyun alanının farklı noktalarında belirir; oyuncu kapanan halkaya doğru zamanda ulaşır. Canlı üretilen özgün elektronik müzikler, farklı zorluklar, masaüstü ve mobil kontroller, hesap sistemi ve global skor tabloları içerir.
 
 ## Kontroller
 
-- Şeritler: `D`, `F`, `J`, `K`
+- Masaüstü: Fareyi kapanan hedef halkasına götür
 - Duraklat/devam: `Esc`
-- Mobil: Ekranın altındaki dört şeride dokun
+- Mobil: Oyun alanındaki hedefe dokun veya parmağını sürükle
 
 ## Yerel geliştirme
 

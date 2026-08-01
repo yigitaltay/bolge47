@@ -34,7 +34,7 @@
           <button class="ghost-btn" data-scroll="leaderboard">Global sıralama</button>
         </div>
         <div class="hero-meta">
-          <div><strong>4</strong><span>Zorluk</span></div>
+          <div><strong>360°</strong><span>Serbest alan</span></div>
           <div><strong>3</strong><span>Özgün parça</span></div>
           <div><strong>∞</strong><span>Tekrar</span></div>
         </div>
@@ -47,7 +47,7 @@
           <i style="--h:63%"></i><i style="--h:82%"></i><i style="--h:44%"></i><i style="--h:70%"></i>
           <i style="--h:98%"></i><i style="--h:58%"></i><i style="--h:76%"></i><i style="--h:34%"></i>
         </div>
-        <div class="float-note n1">D</div><div class="float-note n2">F</div><div class="float-note n3">J</div><div class="float-note n4">K</div>
+        <div class="float-note n1">●</div><div class="float-note n2">◌</div><div class="float-note n3">●</div><div class="float-note n4">◌</div>
       </div>
     </section>
 
@@ -102,13 +102,10 @@
     </div>
     <div class="game-stage">
       <canvas id="gameCanvas"></canvas>
-      <div id="gameMessage" class="game-message"><strong>HAZIR?</strong><span>D · F · J · K</span></div>
+      <div id="gameMessage" class="game-message"><strong>HAZIR?</strong><span>FAREYİ HEDEFLERE TAŞI</span></div>
       <div id="pauseOverlay" class="pause-overlay hidden"><span>DURAKLATILDI</span><button id="resumeGame" class="primary-btn">Devam et</button></div>
     </div>
-    <div class="touch-controls" aria-label="Dokunmatik kontroller">
-      <button data-lane="0"><span>D</span></button><button data-lane="1"><span>F</span></button>
-      <button data-lane="2"><span>J</span></button><button data-lane="3"><span>K</span></button>
-    </div>
+    <div class="aim-hint"><span class="mouse-icon">↖</span><b>FARE</b> ile hedeflere git <i></i><span>Mobilde hedefe dokun</span></div>
   </section>
 
   <dialog id="authModal" class="modal auth-modal">
@@ -126,8 +123,8 @@
 
   <dialog id="howModal" class="modal how-modal">
     <button class="modal-close" data-close="how" aria-label="Kapat">×</button><p class="eyebrow"><span></span> HIZLI BAŞLANGIÇ</p><h2>Ritmi yakala.</h2>
-    <div class="how-steps"><div><b>01</b><span>Notalar çizgiye geldiğinde ilgili tuşa bas.</span></div><div><b>02</b><span>Perfect vuruşlarla kombonu ve çarpanını büyüt.</span></div><div><b>03</b><span>Hesabınla oynayarak skorunu global tabloya gönder.</span></div></div>
-    <div class="keys"><kbd>D</kbd><kbd>F</kbd><kbd>J</kbd><kbd>K</kbd></div>
+    <div class="how-steps"><div><b>01</b><span>Oyun alanının herhangi bir yerinde beliren kapanan halkayı takip et.</span></div><div><b>02</b><span>Fareyi hedefe tam vuruş anında götürerek Perfect kombosu oluştur.</span></div><div><b>03</b><span>Hesabınla oynayarak skorunu global tabloya gönder.</span></div></div>
+    <div class="aim-demo"><i></i><i></i><i></i><span>⌁</span></div>
   </dialog>
 
   <dialog id="resultModal" class="modal result-modal">
